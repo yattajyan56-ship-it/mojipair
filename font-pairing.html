@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>もじペア</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1e1e22;
+  --surface:#28282e;
+  --surface2:#32323a;
+  --surface3:#3a3a44;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.13);
+  --text:#e8e6e2;
+  --text-muted:#909090;
+  --text-dim:#5a5a5a;
+  --accent:#e86a1a;
+  --accent-dim:rgba(232,106,26,0.15);
+  --accent-dim2:rgba(232,106,26,0.07);
+  --h-color:#7eb8f7;
+  --h-bg:rgba(126,184,247,0.1);
+  --h-bdr:rgba(126,184,247,0.22);
+  --b-color:#5ecf82;
+  --b-bg:rgba(94,207,130,0.08);
+  --b-bdr:rgba(94,207,130,0.22);
+  --radius:12px;
+  --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;overflow:hidden}
+
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 0%,rgba(232,106,26,0.04) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 30% at 85% 100%,rgba(80,80,180,0.03) 0%,transparent 70%);
+  z-index:0;
+}
+
+.app{display:flex;flex-direction:column;height:100vh;position:relative;z-index:1}
+
+/* ===== HEADER ===== */
+.header{
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;gap:16px;height:52px;
+}
+.logo{font-size:22px;font-weight:900;letter-spacing:-1px;color:var(--text);margin-right:4px}
+.logo em{color:var(--accent);font-style:normal}
+.tagline{font-size:12px;color:var(--text-dim);letter-spacing:0.3px}
+.hd-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.hd-btn{
+  padding:6px 14px;font-size:12px;font-weight:500;
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  background:none;color:var(--text-muted);cursor:pointer;
+  font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s;
+}
+.hd-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.hd-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.hd-btn.primary:hover{opacity:.88}
+
+/* ===== FIXED PREVIEW ===== */
+.preview-fixed{
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  padding:16px 28px 14px;
+  background:#fff;
+}
+.pf-displays{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.pf-box{
+  background:#fff;
+  border:1px solid rgba(0,0,0,0.1);border-radius:var(--radius);
+  padding:20px 20px 10px;min-height:60px;
+  display:flex;align-items:center;
+  position:relative;transition:border-color .2s;
+  cursor:text;
+}
+.pf-box:hover{border-color:rgba(0,0,0,0.2)}
+.pf-box.drop-over{border:1.5px dashed var(--accent);background:#fff8f4}
+.pf-role{
+  position:absolute;top:6px;left:14px;
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:#aaa;
+}
+.pf-font-label{
+  position:absolute;top:6px;right:12px;
+  font-size:10px;color:var(--accent);font-weight:700;letter-spacing:0.3px;
+  transition:opacity .15s;
+}
+.pf-font-label:hover{opacity:.7;text-decoration:underline}
+.pf-drop-hint{
+  position:absolute;bottom:7px;right:12px;
+  font-size:9px;color:#bbb;pointer-events:none;letter-spacing:.3px;
+}
+.pf-text{
+  line-height:1.4;color:#0e0e10;
+  outline:none;width:100%;background:none;border:none;
+  font-family:inherit;cursor:text;padding-top:2px;
+}
+.pf-controls{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.sz-group{display:flex;align-items:center;gap:8px}
+.sz-label{font-size:11px;color:#888;white-space:nowrap}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:110px;height:2px;background:#ddd;
+  border-radius:99px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+}
+.sz-val{font-size:12px;font-weight:700;min-width:34px;color:var(--accent)}
+
+/* ===== TAB BAR ===== */
+.tab-bar{
+  flex-shrink:0;display:flex;gap:4px;
+  padding:10px 28px 0;
+  border-bottom:1px solid var(--border);
+}
+.tab{
+  padding:7px 20px 9px;font-size:13px;font-weight:500;cursor:pointer;
+  border:none;background:none;color:var(--text-muted);
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  font-family:'Zen Kaku Gothic New',sans-serif;transition:all .2s;
+  white-space:nowrap;border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+}
+.tab:hover:not(.active){color:var(--text);background:var(--surface2)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+.tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent);color:#fff;
+  border-radius:99px;font-size:10px;font-weight:900;
+  min-width:18px;height:18px;padding:0 5px;margin-left:6px;
+}
+
+/* ===== PANELS ===== */
+.panels{flex:1;overflow:hidden;position:relative}
+.panel{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+.panel.active{display:flex}
+
+/* ===== TAB1 ===== */
+.t1-ctrl{
+  flex-shrink:0;border-bottom:1px solid var(--border);
+  padding:8px 28px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.filter-row{display:flex;gap:4px;flex-wrap:wrap}
+.fbtn{
+  font-size:11px;padding:4px 12px;border-radius:99px;
+  border:1px solid var(--border2);background:none;
+  color:var(--text-muted);cursor:pointer;
+  font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s;
+}
+.fbtn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.fbtn:hover:not(.active){background:var(--surface2);color:var(--text)}
+.srch{
+  margin-left:auto;padding:6px 12px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:12px;background:var(--surface);color:var(--text);
+  outline:none;font-family:'Zen Kaku Gothic New',sans-serif;width:160px;
+}
+.srch:focus{border-color:var(--border2)}
+.srch::placeholder{color:var(--text-dim)}
+
+.t1-body{flex:1;overflow-y:auto;padding:20px 28px}
+.sec-hd{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-dim);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.sec-hd::after{content:'';flex:1;height:1px;background:var(--border)}
+.fgrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:8px;margin-bottom:20px;
+}
+
+/* font card */
+.fc{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:border-color .15s;cursor:grab;
+}
+.fc:hover{border-color:var(--border2)}
+.fc:active{cursor:grabbing}
+.fc-prev{padding:16px 14px 8px;min-height:80px;display:flex;align-items:flex-end}
+.fc-samp{line-height:1.1;color:var(--text);word-break:break-all;pointer-events:none}
+.fc-foot{
+  padding:7px 10px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:5px;
+}
+.fc-name{
+  font-size:10px;color:var(--text-muted);flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  cursor:pointer;transition:color .15s;
+}
+.fc-name:hover{color:var(--accent)}
+.fc-tag{
+  font-size:9px;padding:1px 5px;border-radius:3px;
+  border:1px solid var(--border);color:var(--text-dim);background:var(--surface2);
+}
+.fc-tag.local{background:rgba(74,222,128,0.1);color:#4ade80;border-color:rgba(74,222,128,0.25)}
+.hb-btns{display:flex;gap:3px;flex-shrink:0}
+.hb{
+  padding:2px 8px;font-size:10px;font-weight:700;border-radius:4px;cursor:pointer;
+  border:1px solid var(--border2);background:none;color:var(--text-dim);
+  font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s;
+}
+.hb.h-on{background:var(--h-bg);color:var(--h-color);border-color:var(--h-bdr)}
+.hb.b-on{background:var(--b-bg);color:var(--b-color);border-color:var(--b-bdr)}
+.hb:hover:not(.h-on):not(.b-on){background:var(--surface2);color:var(--text-muted)}
+
+/* ===== TAB2 ===== */
+.t2-body{flex:1;overflow-y:auto;padding:20px 28px}
+.t2-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.col-hd{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  padding:0 0 10px;border-bottom:1px solid;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.col-hd.ch{color:var(--h-color);border-color:var(--h-bdr)}
+.col-hd.cb{color:var(--b-color);border-color:var(--b-bdr)}
+.col-count{font-size:10px;font-weight:400;opacity:.6}
+
+/* checked font card */
+.cfc{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;margin-bottom:8px;
+  cursor:grab;transition:border-color .15s;
+}
+.cfc:hover{border-color:var(--border2)}
+.cfc:active{cursor:grabbing}
+.cfc.selected-h{border-color:var(--h-color);box-shadow:0 0 0 1px var(--h-bdr)}
+.cfc.selected-b{border-color:var(--b-color);box-shadow:0 0 0 1px var(--b-bdr)}
+.cfc-prev{padding:14px 14px 8px;min-height:80px;display:flex;align-items:flex-end}
+.cfc-samp{line-height:1.1;word-break:break-all;pointer-events:none}
+.cfc-foot{
+  padding:7px 10px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;
+}
+.cfc-name{
+  font-size:10px;color:var(--text-muted);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;flex:1;
+  cursor:pointer;transition:color .15s;
+}
+.cfc-name:hover{color:var(--accent)}
+.cfc-use{
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;
+  cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s;
+}
+.cfc-use.uh{background:var(--h-bg);color:var(--h-color);border:1px solid var(--h-bdr)}
+.cfc-use.ub{background:var(--b-bg);color:var(--b-color);border:1px solid var(--b-bdr)}
+.cfc-use:hover{opacity:.75}
+.cfc-rm{
+  font-size:11px;color:var(--text-dim);background:none;border:none;
+  cursor:pointer;padding:2px 5px;
+  font-family:'Zen Kaku Gothic New',sans-serif;transition:color .15s;
+}
+.cfc-rm:hover{color:#ff6060}
+.col-empty{font-size:12px;color:var(--text-dim);text-align:center;padding:32px 0;line-height:1.9}
+
+/* toast */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--accent);color:#fff;font-size:12px;font-weight:700;
+  padding:8px 20px;border-radius:99px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;
+  z-index:9999;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">もじ<em>ペア</em></div>
+  <div class="tagline">フォントのペアリングをかんたんに確認できるツール</div>
+  <div class="hd-right">
+    <input type="file" id="font-file" accept=".ttf,.otf,.woff,.woff2" multiple style="display:none" onchange="uploadFonts(event)">
+    <button class="hd-btn" onclick="document.getElementById('font-file').click()">＋ フォントをアップロード</button>
+    <button class="hd-btn primary" id="sync-btn" onclick="syncLocal()">⟳ ローカルフォントを同期</button>
+  </div>
+</div>
+
+<!-- FIXED PREVIEW -->
+<div class="preview-fixed">
+  <div class="pf-displays">
+    <div class="pf-box" id="pf-h"
+      ondragover="pfOver(event,this)" ondragleave="pfLeave(this)" ondrop="pfDrop(event,'h')">
+      <span class="pf-role">H 見出し</span>
+      <span class="pf-font-label" id="pf-h-label" onclick="copyFont(pfFont.h,event)" style="cursor:pointer" title="クリックでコピー"></span>
+      <span class="pf-drop-hint">フォントをドロップ ↓</span>
+      <div class="pf-text" id="pf-h-text" contenteditable="true" style="font-size:40px">フォントの組み合わせを見つけよう</div>
+    </div>
+    <div class="pf-box" id="pf-b"
+      ondragover="pfOver(event,this)" ondragleave="pfLeave(this)" ondrop="pfDrop(event,'b')">
+      <span class="pf-role">B 本文</span>
+      <span class="pf-font-label" id="pf-b-label" onclick="copyFont(pfFont.b,event)" style="cursor:pointer" title="クリックでコピー"></span>
+      <span class="pf-drop-hint">フォントをドロップ ↓</span>
+      <div class="pf-text" id="pf-b-text" contenteditable="true" style="font-size:17px;line-height:1.8">見出しと本文のフォントを選び、実際のレイアウトで相性を確認できます。<br>サイズや行間を調整しながら、自分に合ったタイポグラフィを見つけてください。</div>
+    </div>
+  </div>
+  <div class="pf-controls">
+    <div class="sz-group">
+      <span class="sz-label">見出しサイズ</span>
+      <input type="range" id="sz-h" min="20" max="96" step="2" value="40" oninput="onSzH(this.value)">
+      <span class="sz-val" id="sz-h-val">40px</span>
+    </div>
+    <div class="sz-group">
+      <span class="sz-label">本文サイズ</span>
+      <input type="range" id="sz-b" min="10" max="48" step="1" value="17" oninput="onSzB(this.value)">
+      <span class="sz-val" id="sz-b-val">17px</span>
+    </div>
+    <button class="hd-btn" onclick="savePreviewImage()" style="margin-left:auto" id="save-btn">↓ 画像を保存</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('list',this)">フォント一覧</button>
+  <button class="tab" onclick="switchTab('checked',this)">チェックフォント一覧<span class="tab-badge" id="badge" style="display:none">0</span></button>
+</div>
+
+<!-- PANELS -->
+<div class="panels">
+
+  <!-- TAB1 -->
+  <div class="panel active" id="panel-list">
+    <div class="t1-ctrl">
+      <div class="filter-row">
+        <button class="fbtn active" onclick="setFilter('all',this)">すべて</button>
+        <button class="fbtn" onclick="setFilter('serif',this)">Serif</button>
+        <button class="fbtn" onclick="setFilter('sans',this)">Sans</button>
+        <button class="fbtn" onclick="setFilter('display',this)">Display</button>
+        <button class="fbtn" onclick="setFilter('mono',this)">Mono</button>
+        <button class="fbtn" onclick="setFilter('ja',this)">日本語</button>
+        <button class="fbtn" onclick="setFilter('google',this)">Googleフォント</button>
+        <button class="fbtn" onclick="setFilter('local',this)">マイフォント</button>
+      </div>
+      <input class="srch" id="sample-txt" type="text" value="Aa Bb 123" placeholder="サンプルテキスト..." oninput="onSampleChange(this.value)" style="width:130px">
+      <input class="srch" id="srch" type="text" placeholder="フォント名を検索..." oninput="renderGrid()">
+    </div>
+    <div class="t1-body" id="t1-body"></div>
+  </div>
+
+  <!-- TAB2 -->
+  <div class="panel" id="panel-checked">
+    <div class="t2-body">
+      <div class="t2-cols">
+        <div>
+          <div class="col-hd ch">H 見出し<span class="col-count" id="cnt-h">　0件</span></div>
+          <div id="col-h-list"></div>
+        </div>
+        <div>
+          <div class="col-hd cb">B 本文<span class="col-count" id="cnt-b">　0件</span></div>
+          <div id="col-b-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var GFONTS=[
+  // Serif (40)
+  {n:'Playfair Display',c:'serif'},{n:'Merriweather',c:'serif'},
+  {n:'Lora',c:'serif'},{n:'Cormorant Garamond',c:'serif'},
+  {n:'EB Garamond',c:'serif'},{n:'Libre Baskerville',c:'serif'},
+  {n:'Crimson Text',c:'serif'},{n:'Noto Serif JP',c:'serif'},
+  {n:'Shippori Mincho',c:'serif'},{n:'Spectral',c:'serif'},
+  {n:'Source Serif 4',c:'serif'},{n:'Vollkorn',c:'serif'},
+  {n:'Bitter',c:'serif'},{n:'Alegreya',c:'serif'},
+  {n:'Domine',c:'serif'},{n:'Cardo',c:'serif'},
+  {n:'Arvo',c:'serif'},{n:'Josefin Slab',c:'serif'},
+  {n:'Rokkitt',c:'serif'},{n:'Zilla Slab',c:'serif'},
+  {n:'Neuton',c:'serif'},{n:'Radley',c:'serif'},
+  {n:'Gilda Display',c:'serif'},{n:'Unna',c:'serif'},
+  {n:'Della Respira',c:'serif'},{n:'Gentium Book Plus',c:'serif'},
+  {n:'GFS Didot',c:'serif'},{n:'Sorts Mill Goudy',c:'serif'},
+  {n:'Noto Serif',c:'serif'},{n:'PT Serif',c:'serif'},
+  {n:'Tinos',c:'serif'},{n:'Droid Serif',c:'serif'},
+  {n:'Frank Ruhl Libre',c:'serif'},{n:'Bodoni Moda',c:'serif'},
+  {n:'Brygada 1918',c:'serif'},{n:'Freight Text Pro',c:'serif'},
+  {n:'Lustria',c:'serif'},{n:'Trocchi',c:'serif'},
+  {n:'Vidaloka',c:'serif'},{n:'Quando',c:'serif'},
+  // Sans (55)
+  {n:'Inter',c:'sans'},{n:'DM Sans',c:'sans'},
+  {n:'Outfit',c:'sans'},{n:'Plus Jakarta Sans',c:'sans'},
+  {n:'Figtree',c:'sans'},{n:'Nunito',c:'sans'},
+  {n:'Rubik',c:'sans'},{n:'Work Sans',c:'sans'},
+  {n:'Jost',c:'sans'},{n:'Raleway',c:'sans'},
+  {n:'Manrope',c:'sans'},{n:'Noto Sans JP',c:'sans'},
+  {n:'M PLUS Rounded 1c',c:'sans'},{n:'BIZ UDPGothic',c:'sans'},
+  {n:'Zen Kaku Gothic New',c:'sans'},{n:'Mulish',c:'sans'},
+  {n:'Poppins',c:'sans'},{n:'Lato',c:'sans'},
+  {n:'Open Sans',c:'sans'},{n:'Source Sans 3',c:'sans'},
+  {n:'Karla',c:'sans'},{n:'Quicksand',c:'sans'},
+  {n:'Cabin',c:'sans'},{n:'Barlow',c:'sans'},
+  {n:'Exo 2',c:'sans'},{n:'Heebo',c:'sans'},
+  {n:'IBM Plex Sans',c:'sans'},{n:'Red Hat Display',c:'sans'},
+  {n:'Titillium Web',c:'sans'},{n:'Assistant',c:'sans'},
+  {n:'Nunito Sans',c:'sans'},{n:'Hind',c:'sans'},
+  {n:'Varela Round',c:'sans'},{n:'Oxygen',c:'sans'},
+  {n:'Ubuntu',c:'sans'},{n:'Roboto',c:'sans'},
+  {n:'Noto Sans',c:'sans'},{n:'PT Sans',c:'sans'},
+  {n:'Fira Sans',c:'sans'},{n:'Overpass',c:'sans'},
+  {n:'Dosis',c:'sans'},{n:'Catamaran',c:'sans'},
+  {n:'Kanit',c:'sans'},{n:'Sarabun',c:'sans'},
+  {n:'Prompt',c:'sans'},{n:'Asap',c:'sans'},
+  {n:'Encode Sans',c:'sans'},{n:'Signika',c:'sans'},
+  {n:'Yantramanav',c:'sans'},{n:'Mada',c:'sans'},
+  {n:'Almarai',c:'sans'},{n:'Taviraj',c:'sans'},
+  {n:'Mitr',c:'sans'},{n:'Sora',c:'sans'},
+  {n:'Be Vietnam Pro',c:'sans'},
+  // Display (35)
+  {n:'Bebas Neue',c:'display'},{n:'Oswald',c:'display'},
+  {n:'Montserrat',c:'display'},{n:'Barlow Condensed',c:'display'},
+  {n:'Anton',c:'display'},{n:'Abril Fatface',c:'display'},
+  {n:'Fraunces',c:'display'},{n:'Syne',c:'display'},
+  {n:'Space Grotesk',c:'display'},{n:'Righteous',c:'display'},
+  {n:'Cinzel',c:'display'},{n:'Philosopher',c:'display'},
+  {n:'Poiret One',c:'display'},{n:'Comfortaa',c:'display'},
+  {n:'Pacifico',c:'display'},{n:'Lobster',c:'display'},
+  {n:'Dancing Script',c:'display'},{n:'Great Vibes',c:'display'},
+  {n:'Permanent Marker',c:'display'},{n:'Boogaloo',c:'display'},
+  {n:'Courgette',c:'display'},{n:'Kalam',c:'display'},
+  {n:'Architects Daughter',c:'display'},{n:'Playfair Display SC',c:'display'},
+  {n:'Alfa Slab One',c:'display'},{n:'Bree Serif',c:'display'},
+  {n:'Calistoga',c:'display'},{n:'Cabin Sketch',c:'display'},
+  {n:'Fredoka One',c:'display'},{n:'Lily Script One',c:'display'},
+  {n:'Nixie One',c:'display'},{n:'Norican',c:'display'},
+  {n:'Pinyon Script',c:'display'},{n:'Sacramento',c:'display'},
+  {n:'Special Elite',c:'display'},
+  // Mono (18)
+  {n:'JetBrains Mono',c:'mono'},{n:'Fira Code',c:'mono'},
+  {n:'Source Code Pro',c:'mono'},{n:'IBM Plex Mono',c:'mono'},
+  {n:'Space Mono',c:'mono'},{n:'Roboto Mono',c:'mono'},
+  {n:'Inconsolata',c:'mono'},{n:'Courier Prime',c:'mono'},
+  {n:'PT Mono',c:'mono'},{n:'Overpass Mono',c:'mono'},
+  {n:'Anonymous Pro',c:'mono'},{n:'Nanum Gothic Coding',c:'mono'},
+  {n:'Share Tech Mono',c:'mono'},{n:'Cutive Mono',c:'mono'},
+  {n:'VT323',c:'mono'},{n:'Xanh Mono',c:'mono'},
+  {n:'Nova Mono',c:'mono'},{n:'Martian Mono',c:'mono'},
+  // 日本語 (30)
+  {n:'Noto Sans JP',c:'ja'},{n:'Noto Serif JP',c:'ja'},
+  {n:'Shippori Mincho',c:'ja'},{n:'Zen Kaku Gothic New',c:'ja'},
+  {n:'M PLUS Rounded 1c',c:'ja'},{n:'BIZ UDPGothic',c:'ja'},
+  {n:'M PLUS 1p',c:'ja'},{n:'Kosugi Maru',c:'ja'},
+  {n:'Kosugi',c:'ja'},{n:'Sawarabi Gothic',c:'ja'},
+  {n:'Sawarabi Mincho',c:'ja'},{n:'Hina Mincho',c:'ja'},
+  {n:'Kaisei Decol',c:'ja'},{n:'Kaisei Opti',c:'ja'},
+  {n:'Kaisei Tokumin',c:'ja'},{n:'Kaisei HarunoUmi',c:'ja'},
+  {n:'Shippori Mincho B1',c:'ja'},{n:'Shippori Antique',c:'ja'},
+  {n:'Shippori Antique B1',c:'ja'},{n:'Zen Kurenaido',c:'ja'},
+  {n:'Zen Old Mincho',c:'ja'},{n:'Zen Antique',c:'ja'},
+  {n:'Zen Antique Soft',c:'ja'},{n:'Zen Maru Gothic',c:'ja'},
+  {n:'Klee One',c:'ja'},{n:'Train One',c:'ja'},
+  {n:'Dela Gothic One',c:'ja'},{n:'Yusei Magic',c:'ja'},
+  {n:'Yuji Syuku',c:'ja'},{n:'Yuji Boku',c:'ja'},
+];
+var localFonts=[];
+var roles={};
+var pfFont={h:null,b:null};
+var catFilter='all';
+var loadedGF=new Set();
+var dragFont=null;
+var sampleSize=30;
+var sampleText='Aa Bb 123';
+
+function onSampleChange(v){
+  sampleText=v||'Aa Bb 123';
+  renderGrid();
+}
+
+function allFonts(){return GFONTS.map(function(f){return{n:f.n,c:f.c,local:false};}).concat(localFonts);}
+function isLocal(n){return localFonts.some(function(f){return f.n===n;});}
+
+function switchTab(t,el){
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('active');});
+  el.classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='checked')renderChecked();
+}
+
+// PREVIEW
+function onSzH(v){document.getElementById('pf-h-text').style.fontSize=v+'px';document.getElementById('sz-h-val').textContent=v+'px';}
+function onSzB(v){document.getElementById('pf-b-text').style.fontSize=v+'px';document.getElementById('sz-b-val').textContent=v+'px';}
+function pfOver(e,el){e.preventDefault();e.stopPropagation();el.classList.add('drop-over');}
+function pfLeave(el){el.classList.remove('drop-over');}
+function pfDrop(e,role){
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('pf-'+role).classList.remove('drop-over');
+  var name=e.dataTransfer.getData('text/plain');
+  if(!name&&dragFont)name=dragFont;
+  if(!name)return;
+  applyPfFont(role,name);
+  dragFont=null;
+}
+function applyPfFont(role,name){
+  pfFont[role]=name;loadGF(name);
+  document.getElementById('pf-'+role+'-text').style.fontFamily="'"+name+"',serif";
+  document.getElementById('pf-'+role+'-label').textContent=name;
+  renderChecked();
+}
+
+// GRID
+function setFilter(f,el){
+  catFilter=f;
+  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+  renderGrid();
+}
+
+function renderGrid(){
+  var q=(document.getElementById('srch').value||'').toLowerCase();
+  var all=allFonts();
+  var filtered=all.filter(function(f){
+    var mq=f.n.toLowerCase().includes(q);
+    if(catFilter==='all')return mq;
+    if(catFilter==='google')return mq&&!f.local;
+    if(catFilter==='local')return mq&&f.local;
+    return mq&&f.c===catFilter;
+  });
+
+  var showCats;
+  if(catFilter==='all')showCats=['local','ja','serif','sans','display','mono'];
+  else if(catFilter==='google')showCats=['ja','serif','sans','display','mono'];
+  else if(catFilter==='local')showCats=['local'];
+  else showCats=[catFilter];
+
+  var catLbl={local:'マイフォント',ja:'日本語',serif:'Serif',sans:'Sans-serif',display:'Display',mono:'Monospace'};
+  var html='';
+  showCats.forEach(function(cat){
+    var items=cat==='local'
+      ?filtered.filter(function(f){return f.local;})
+      :filtered.filter(function(f){return!f.local&&f.c===cat;});
+    if(!items.length)return;
+    // 日本語フォントはサンプルテキストが英数字のみだと意味がないので日本語を混ぜる
+    var dispText=sampleText;
+    if(cat==='ja'&&/^[a-zA-Z0-9\s!-\/:-@\[-`{-~]+$/.test(sampleText)){
+      dispText='あいうえお Aa';
+    }
+    html+='<div class="sec-hd">'+catLbl[cat]+' <span style="font-weight:400;opacity:.6">('+items.length+')</span></div><div class="fgrid">';
+    items.forEach(function(f){
+      var r=roles[f.n]||{};
+      var hOn=r.h?'h-on':'';var bOn=r.b?'b-on':'';
+      var tcls=f.local?'fc-tag local':'fc-tag';
+      var tagLbl=f.local?'マイ':f.c==='ja'?'日本語':f.c;
+      html+='<div class="fc" draggable="true" ondragstart="onDragStart(event,\''+ea(f.n)+'\')">'
+        +'<div class="fc-prev"><div class="fc-samp" style="font-family:\''+esc(f.n)+'\',serif;font-size:'+sampleSize+'px">'+esc(dispText)+'</div></div>'
+        +'<div class="fc-foot">'
+          +'<span class="fc-name" title="クリックでコピー" onclick="copyFont(\''+ea(f.n)+'\',event)">'+esc(f.n)+'</span>'
+          +'<span class="'+tcls+'">'+tagLbl+'</span>'
+          +'<div class="hb-btns">'
+            +'<button class="hb '+hOn+'" onclick="toggleRole(\''+ea(f.n)+'\',\'h\')">H</button>'
+            +'<button class="hb '+bOn+'" onclick="toggleRole(\''+ea(f.n)+'\',\'b\')">B</button>'
+          +'</div>'
+        +'</div>'
+      +'</div>';
+      if(!f.local)loadGF(f.n);
+    });
+    html+='</div>';
+  });
+  if(!html)html='<div style="padding:48px;text-align:center;color:var(--text-dim);font-size:13px">見つかりません</div>';
+  document.getElementById('t1-body').innerHTML=html;
+}
+
+function toggleRole(name,role){
+  if(!roles[name])roles[name]={h:false,b:false};
+  roles[name][role]=!roles[name][role];
+  if(!roles[name].h&&!roles[name].b)delete roles[name];
+  loadGF(name);updateBadge();renderGrid();renderChecked();
+}
+function updateBadge(){
+  var n=Object.keys(roles).length;
+  var b=document.getElementById('badge');
+  if(n>0){b.textContent=n;b.style.display='inline-flex';}else b.style.display='none';
+}
+
+// CHECKED
+function renderChecked(){
+  var hList=Object.keys(roles).filter(function(n){return roles[n].h;});
+  var bList=Object.keys(roles).filter(function(n){return roles[n].b;});
+  document.getElementById('cnt-h').textContent='　'+hList.length+'件';
+  document.getElementById('cnt-b').textContent='　'+bList.length+'件';
+  var szH=parseInt(document.getElementById('sz-h').value)||40;
+  var szB=parseInt(document.getElementById('sz-b').value)||17;
+
+  function makeCards(list,role,sz,useCls){
+    if(!list.length)return '<div class="col-empty">フォント一覧タブで<br>'+(role==='h'?'H（見出し）':'B（本文）')+'を<br>チェックしてください</div>';
+    return list.map(function(name){
+      var isAct=pfFont[role]===name;
+      var cls='cfc'+(isAct?' selected-'+role:'');
+      return '<div class="'+cls+'" onclick="applyPfFont(\''+role+'\',\''+ea(name)+'\')" draggable="true" ondragstart="onDragStart(event,\''+ea(name)+'\')">'
+        +'<div class="cfc-prev"><div class="cfc-samp" style="font-family:\''+esc(name)+'\',serif;font-size:'+Math.round(sz*0.75)+'px;color:var(--text)">'+esc(sampleText)+'</div></div>'
+        +'<div class="cfc-foot">'
+          +'<span class="cfc-name" title="クリックでコピー" onclick="event.stopPropagation();copyFont(\''+ea(name)+'\',event)">'+esc(name)+'</span>'
+          +'<button class="cfc-use '+useCls+'" onclick="event.stopPropagation();applyPfFont(\''+role+'\',\''+ea(name)+'\')">'+(isAct?'✓ 適用中':'適用')+'</button>'
+          +'<button class="cfc-rm" onclick="event.stopPropagation();removeRole(\''+ea(name)+'\',\''+role+'\')">✕</button>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+  }
+  document.getElementById('col-h-list').innerHTML=makeCards(hList,'h',szH,'uh');
+  document.getElementById('col-b-list').innerHTML=makeCards(bList,'b',szB,'ub');
+}
+
+function removeRole(name,role){
+  if(roles[name])roles[name][role]=false;
+  if(roles[name]&&!roles[name].h&&!roles[name].b)delete roles[name];
+  if(pfFont[role]===name){pfFont[role]=null;document.getElementById('pf-'+role+'-label').textContent='';}
+  updateBadge();renderGrid();renderChecked();
+}
+
+// DRAG
+function onDragStart(e,name){
+  dragFont=name;
+  e.dataTransfer.effectAllowed='copy';
+  e.dataTransfer.setData('text/plain',name);
+}
+
+// GOOGLE FONTS
+function loadGF(name){
+  if(loadedGF.has(name)||isLocal(name))return;
+  var l=document.createElement('link');
+  l.rel='stylesheet';
+  l.href='https://fonts.googleapis.com/css2?family='+name.replace(/ /g,'+')+':wght@400;700&display=swap';
+  document.head.appendChild(l);
+  loadedGF.add(name);
+}
+
+// LOCAL SYNC
+async function syncLocal(){
+  var btn=document.getElementById('sync-btn');
+  if(!('queryLocalFonts' in window)){
+    btn.textContent='⚠ Chrome以外は非対応';
+    setTimeout(function(){btn.textContent='⟳ ローカルフォントを同期';},3000);return;
+  }
+  try{
+    btn.textContent='許可をリクエスト中...';
+    var fonts=await window.queryLocalFonts();
+    var seen=new Set(localFonts.map(function(f){return f.n;}));
+    var added=0;
+    fonts.forEach(function(f){
+      var n=f.family;
+      if(!seen.has(n)&&!GFONTS.some(function(g){return g.n===n;})){seen.add(n);localFonts.push({n:n,c:'sans',local:true});added++;}
+    });
+    btn.textContent='✓ '+added+'個を同期完了';
+    setTimeout(function(){btn.textContent='⟳ ローカルフォントを同期';},3000);
+    renderGrid();
+  }catch(e){
+    btn.textContent='⚠ 許可が必要です';
+    setTimeout(function(){btn.textContent='⟳ ローカルフォントを同期';},3000);
+  }
+}
+
+// UPLOAD
+function uploadFonts(e){
+  Array.from(e.target.files).forEach(function(file){
+    var name=file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ');
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var ff=new FontFace(name,ev.target.result);
+      ff.load().then(function(loaded){
+        document.fonts.add(loaded);
+        if(!localFonts.some(function(f){return f.n===name;}))localFonts.push({n:name,c:'sans',local:true});
+        renderGrid();
+      }).catch(function(){showToast('読み込み失敗: '+name);});
+    };
+    reader.readAsArrayBuffer(file);
+  });
+  e.target.value='';
+}
+
+// SAVE PREVIEW IMAGE
+function savePreviewImage(){
+  var btn=document.getElementById('save-btn');
+  btn.textContent='生成中...';btn.disabled=true;
+
+  var hEl=document.getElementById('pf-h-text');
+  var bEl=document.getElementById('pf-b-text');
+  var hFont=pfFont.h||'Zen Kaku Gothic New';
+  var bFont=pfFont.b||'Zen Kaku Gothic New';
+  var hSize=parseInt(document.getElementById('sz-h').value)||40;
+  var bSize=parseInt(document.getElementById('sz-b').value)||17;
+  var hText=hEl.innerText||hEl.textContent;
+  var bText=bEl.innerText||bEl.textContent;
+
+  var W=1200,PAD=64;
+  // measure heights roughly
+  var canvas=document.createElement('canvas');
+  canvas.width=W;
+  var ctx=canvas.getContext('2d');
+
+  // wrap text helper
+  function wrapText(ctx,text,maxW,lineH){
+    var lines=[];
+    text.split('\n').forEach(function(para){
+      var words=para.split('');
+      var line='';
+      for(var i=0;i<words.length;i++){
+        var test=line+words[i];
+        if(ctx.measureText(test).width>maxW&&line!==''){
+          lines.push(line);line=words[i];
+        } else {line=test;}
+      }
+      lines.push(line);
+    });
+    return lines;
+  }
+
+  var innerW=W-PAD*2;
+
+  // measure h
+  ctx.font='700 '+hSize+'px \''+hFont+'\', serif';
+  var hLines=wrapText(ctx,hText,innerW,hSize*1.3);
+  var hBlockH=hLines.length*hSize*1.3+PAD*2;
+
+  // measure b
+  ctx.font='400 '+bSize+'px \''+bFont+'\', sans-serif';
+  var bLines=wrapText(ctx,bText,innerW,bSize*1.7);
+  var bBlockH=bLines.length*bSize*1.7+PAD*2;
+
+  // meta strip height
+  var metaH=56;
+  var totalH=hBlockH+bBlockH+metaH+32;
+  canvas.height=totalH;
+
+  // BG
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,W,totalH);
+
+  // thin top accent line
+  ctx.fillStyle='#e86a1a';
+  ctx.fillRect(0,0,W,4);
+
+  var y=4;
+
+  // H BLOCK
+  ctx.fillStyle='#f9f8f6';
+  ctx.fillRect(0,y,W,hBlockH);
+  ctx.fillStyle='rgba(0,0,0,0.06)';
+  ctx.fillRect(0,y+hBlockH-1,W,1);
+
+  // H label
+  ctx.fillStyle='#bbb';
+  ctx.font='700 10px \'Zen Kaku Gothic New\', sans-serif';
+  ctx.fillText('H  見出し',PAD,y+20);
+
+  // H font name
+  ctx.fillStyle='#e86a1a';
+  ctx.font='700 10px \'Zen Kaku Gothic New\', sans-serif';
+  var hFontLabelW=ctx.measureText(hFont).width;
+  ctx.fillText(hFont,W-PAD-hFontLabelW,y+20);
+
+  // H text
+  ctx.fillStyle='#0e0e10';
+  ctx.font='700 '+hSize+'px \''+hFont+'\', serif';
+  var hY=y+PAD+hSize;
+  hLines.forEach(function(line){
+    ctx.fillText(line,PAD,hY);
+    hY+=hSize*1.3;
+  });
+  y+=hBlockH;
+
+  // B BLOCK
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,y,W,bBlockH);
+  ctx.fillStyle='rgba(0,0,0,0.06)';
+  ctx.fillRect(0,y+bBlockH-1,W,1);
+
+  // B label
+  ctx.fillStyle='#bbb';
+  ctx.font='700 10px \'Zen Kaku Gothic New\', sans-serif';
+  ctx.fillText('B  本文',PAD,y+20);
+
+  // B font name
+  ctx.fillStyle='#e86a1a';
+  var bFontLabelW=ctx.measureText(bFont).width;
+  ctx.fillText(bFont,W-PAD-bFontLabelW,y+20);
+
+  // B text
+  ctx.fillStyle='#0e0e10';
+  ctx.font='400 '+bSize+'px \''+bFont+'\', sans-serif';
+  var bY=y+PAD+bSize;
+  bLines.forEach(function(line){
+    ctx.fillText(line,PAD,bY);
+    bY+=bSize*1.7;
+  });
+  y+=bBlockH+16;
+
+  // META STRIP
+  ctx.fillStyle='#f3f2f0';
+  ctx.fillRect(0,y,W,metaH);
+
+  ctx.fillStyle='#0e0e10';
+  ctx.font='700 14px \'Zen Kaku Gothic New\', sans-serif';
+  ctx.fillText('もじペア',PAD,y+metaH/2+5);
+
+  ctx.fillStyle='#999';
+  ctx.font='400 12px \'Zen Kaku Gothic New\', sans-serif';
+  var pairStr='H: '+hFont+'  ×  B: '+bFont;
+  var pairW=ctx.measureText(pairStr).width;
+  ctx.fillText(pairStr,W-PAD-pairW,y+metaH/2+5);
+
+  // DOWNLOAD
+  var a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  var fname='mojipair-'+(hFont+'-'+bFont).replace(/\s+/g,'_').toLowerCase()+'.png';
+  a.download=fname;
+  a.click();
+
+  btn.textContent='↓ 画像を保存';btn.disabled=false;
+  showToast('画像を保存しました');
+}
+function copyFont(name,e){
+  if(e){e.stopPropagation();e.preventDefault();}
+  var decoded=name.replace(/&#39;/g,"'");
+  // clipboard API（https環境）
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(decoded).then(function(){
+      showToast('"'+decoded+'" をコピーしました');
+    }).catch(function(){fallbackCopy(decoded);});
+  } else {
+    fallbackCopy(decoded);
+  }
+}
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  try{
+    document.execCommand('copy');
+    showToast('"'+text+'" をコピーしました');
+  }catch(err){
+    showToast('コピーできませんでした');
+  }
+  document.body.removeChild(ta);
+}
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2000);
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ea(s){return String(s).replace(/'/g,'&#39;');}
+
+GFONTS.slice(0,20).forEach(function(f){loadGF(f.n);});
+renderGrid();
+</script>
+</body>
+</html>
