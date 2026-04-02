@@ -699,72 +699,74 @@ function savePreviewImage(){
   var hText=hEl.innerText||hEl.textContent;
   var bText=bEl.innerText||bEl.textContent;
 
+  // 2倍解像度で高画質に
+  var SCALE=2;
   var W=1200,PAD=64;
-  // measure heights roughly
   var canvas=document.createElement('canvas');
-  canvas.width=W;
   var ctx=canvas.getContext('2d');
 
-  // wrap text helper
-  function wrapText(ctx,text,maxW,lineH){
+  function wrapText(ctx,text,maxW){
     var lines=[];
     text.split('\n').forEach(function(para){
-      var words=para.split('');
+      if(para===''){lines.push('');return;}
+      var chars=para.split('');
       var line='';
-      for(var i=0;i<words.length;i++){
-        var test=line+words[i];
+      for(var i=0;i<chars.length;i++){
+        var test=line+chars[i];
         if(ctx.measureText(test).width>maxW&&line!==''){
-          lines.push(line);line=words[i];
+          lines.push(line);line=chars[i];
         } else {line=test;}
       }
-      lines.push(line);
+      if(line!==''||para!=='')lines.push(line);
     });
     return lines;
   }
 
   var innerW=W-PAD*2;
 
-  // measure h
+  // measure heights at 1x then scale canvas
   ctx.font='700 '+hSize+'px \''+hFont+'\', serif';
-  var hLines=wrapText(ctx,hText,innerW,hSize*1.3);
-  var hBlockH=hLines.length*hSize*1.3+PAD*2;
+  var hLines=wrapText(ctx,hText,innerW);
+  var hBlockH=Math.max(hLines.length*Math.round(hSize*1.45)+PAD*2, hSize*2+PAD*2);
 
-  // measure b
   ctx.font='400 '+bSize+'px \''+bFont+'\', sans-serif';
-  var bLines=wrapText(ctx,bText,innerW,bSize*1.7);
-  var bBlockH=bLines.length*bSize*1.7+PAD*2;
+  var bLines=wrapText(ctx,bText,innerW);
+  var bBlockH=Math.max(bLines.length*Math.round(bSize*1.8)+PAD*2, bSize*3+PAD*2);
 
-  // meta strip height
   var metaH=56;
-  var totalH=hBlockH+bBlockH+metaH+32;
-  canvas.height=totalH;
+  var totalH=hBlockH+bBlockH+metaH;
 
-  // BG
+  // set canvas at 2x for high quality
+  canvas.width=W*SCALE;
+  canvas.height=totalH*SCALE;
+  canvas.style.width=W+'px';
+  canvas.style.height=totalH+'px';
+  ctx.scale(SCALE,SCALE);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+
+  // 全体白背景
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,W,totalH);
 
-  // thin top accent line
-  ctx.fillStyle='#e86a1a';
-  ctx.fillRect(0,0,W,4);
+  var y=0;
 
-  var y=4;
-
-  // H BLOCK
-  ctx.fillStyle='#f9f8f6';
+  // H BLOCK — 白背景
+  ctx.fillStyle='#ffffff';
   ctx.fillRect(0,y,W,hBlockH);
-  ctx.fillStyle='rgba(0,0,0,0.06)';
+  // 下の区切り線
+  ctx.fillStyle='rgba(0,0,0,0.08)';
   ctx.fillRect(0,y+hBlockH-1,W,1);
 
   // H label
   ctx.fillStyle='#bbb';
   ctx.font='700 10px \'Zen Kaku Gothic New\', sans-serif';
-  ctx.fillText('H  見出し',PAD,y+20);
+  ctx.fillText('H  見出し',PAD,y+22);
 
-  // H font name
+  // H font name (orange, right)
   ctx.fillStyle='#e86a1a';
-  ctx.font='700 10px \'Zen Kaku Gothic New\', sans-serif';
   var hFontLabelW=ctx.measureText(hFont).width;
-  ctx.fillText(hFont,W-PAD-hFontLabelW,y+20);
+  ctx.fillText(hFont,W-PAD-hFontLabelW,y+22);
 
   // H text
   ctx.fillStyle='#0e0e10';
@@ -772,25 +774,25 @@ function savePreviewImage(){
   var hY=y+PAD+hSize;
   hLines.forEach(function(line){
     ctx.fillText(line,PAD,hY);
-    hY+=hSize*1.3;
+    hY+=Math.round(hSize*1.45);
   });
   y+=hBlockH;
 
-  // B BLOCK
+  // B BLOCK — 白背景
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,y,W,bBlockH);
-  ctx.fillStyle='rgba(0,0,0,0.06)';
+  ctx.fillStyle='rgba(0,0,0,0.08)';
   ctx.fillRect(0,y+bBlockH-1,W,1);
 
   // B label
   ctx.fillStyle='#bbb';
   ctx.font='700 10px \'Zen Kaku Gothic New\', sans-serif';
-  ctx.fillText('B  本文',PAD,y+20);
+  ctx.fillText('B  本文',PAD,y+22);
 
   // B font name
   ctx.fillStyle='#e86a1a';
   var bFontLabelW=ctx.measureText(bFont).width;
-  ctx.fillText(bFont,W-PAD-bFontLabelW,y+20);
+  ctx.fillText(bFont,W-PAD-bFontLabelW,y+22);
 
   // B text
   ctx.fillStyle='#0e0e10';
@@ -798,16 +800,18 @@ function savePreviewImage(){
   var bY=y+PAD+bSize;
   bLines.forEach(function(line){
     ctx.fillText(line,PAD,bY);
-    bY+=bSize*1.7;
+    bY+=Math.round(bSize*1.8);
   });
-  y+=bBlockH+16;
+  y+=bBlockH;
 
   // META STRIP
-  ctx.fillStyle='#f3f2f0';
+  ctx.fillStyle='#f5f4f2';
   ctx.fillRect(0,y,W,metaH);
+  ctx.fillStyle='rgba(0,0,0,0.06)';
+  ctx.fillRect(0,y,W,1);
 
-  ctx.fillStyle='#0e0e10';
-  ctx.font='700 14px \'Zen Kaku Gothic New\', sans-serif';
+  ctx.fillStyle='#1e1e22';
+  ctx.font='700 13px \'Zen Kaku Gothic New\', sans-serif';
   ctx.fillText('もじペア',PAD,y+metaH/2+5);
 
   ctx.fillStyle='#999';
@@ -817,19 +821,24 @@ function savePreviewImage(){
   ctx.fillText(pairStr,W-PAD-pairW,y+metaH/2+5);
 
   // DOWNLOAD
-  var a=document.createElement('a');
-  a.href=canvas.toDataURL('image/png');
-  var fname='mojipair-'+(hFont+'-'+bFont).replace(/\s+/g,'_').toLowerCase()+'.png';
-  a.download=fname;
-  a.click();
-
-  btn.textContent='↓ 画像を保存';btn.disabled=false;
-  showToast('画像を保存しました');
+  setTimeout(function(){
+    var a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png',1.0);
+    var fname='mojipair-'+(hFont+'-'+bFont).replace(/\s+/g,'_').toLowerCase()+'.png';
+    a.download=fname;
+    a.click();
+    btn.textContent='↓ 画像を保存';btn.disabled=false;
+    showToast('画像を保存しました');
+  },100);
 }
+
+// COPY
+var toastTimer=null;
 function copyFont(name,e){
   if(e){e.stopPropagation();e.preventDefault();}
+  if(!name)return;
   var decoded=name.replace(/&#39;/g,"'");
-  // clipboard API（https環境）
+  // GitHub Pages等のhttps環境ではclipboard API優先
   if(navigator.clipboard&&window.isSecureContext){
     navigator.clipboard.writeText(decoded).then(function(){
       showToast('"'+decoded+'" をコピーしました');
@@ -841,16 +850,15 @@ function copyFont(name,e){
 function fallbackCopy(text){
   var ta=document.createElement('textarea');
   ta.value=text;
-  ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+  ta.setAttribute('readonly','');
+  ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;font-size:16px';
   document.body.appendChild(ta);
-  ta.focus();ta.select();
-  try{
-    document.execCommand('copy');
-    showToast('"'+text+'" をコピーしました');
-  }catch(err){
-    showToast('コピーできませんでした');
-  }
+  ta.focus();
+  ta.setSelectionRange(0,ta.value.length);
+  var ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
   document.body.removeChild(ta);
+  showToast(ok?'"'+text+'" をコピーしました':'コピーできませんでした（URLバーを確認）');
 }
 function showToast(msg){
   var t=document.getElementById('toast');
