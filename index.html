@@ -537,6 +537,9 @@ var sampleText='あ Bb 123';
 var sampleWeight=400;
 var gridCols=4;
 
+function makeKey(name,w){return name+'::'+w;}
+function parseKey(key){var p=key.lastIndexOf('::');return p<0?{name:key,weight:400}:{name:key.slice(0,p),weight:parseInt(key.slice(p+2))||400};}
+
 function onSampleChange(v){sampleText=v||'あ Bb 123';renderGrid();}
 function onGridCols(v){gridCols=parseInt(v);document.getElementById('grid-cols-val').textContent=v;renderGrid();}
 function onGridWeight(v){sampleWeight=parseInt(v);renderGrid();}
@@ -724,16 +727,19 @@ function pfLeave(el){el.classList.remove('drop-over');}
 function pfDrop(e,role){
   e.preventDefault();e.stopPropagation();
   document.getElementById('pf-'+role).classList.remove('drop-over');
-  var name=e.dataTransfer.getData('text/plain');
-  if(!name&&dragFont)name=dragFont;
-  if(!name)return;
-  applyPfFont(role,name);
+  var key=e.dataTransfer.getData('text/plain');
+  if(!key&&dragFont)key=dragFont;
+  if(!key)return;
+  if(key.indexOf('::')<0)key=makeKey(key,sampleWeight);
+  applyPfFont(role,key);
   dragFont=null;
 }
-function applyPfFont(role,name){
-  pfFont[role]=name;loadGF(name);
-  document.getElementById('pf-'+role+'-text').style.fontFamily="'"+name+"',serif";
-  document.getElementById('pf-'+role+'-label').textContent=name;
+function applyPfFont(role,key){
+  var p=parseKey(key);
+  pfFont[role]=key;loadGF(p.name);
+  document.getElementById('pf-'+role+'-text').style.fontFamily="'"+p.name+"',serif";
+  document.getElementById('pf-'+role+'-text').style.fontWeight=p.weight;
+  document.getElementById('pf-'+role+'-label').textContent=p.name+' '+p.weight;
   renderChecked();
 }
 
@@ -776,18 +782,19 @@ function renderGrid(){
     }
     html+='<div class="sec-hd">'+catLbl[cat]+' <span style="font-weight:400;opacity:.6">('+items.length+')</span></div><div class="fgrid" style="grid-template-columns:repeat('+gridCols+',1fr)">';
     items.forEach(function(f){
-      var r=roles[f.n]||{};
-      var hOn=r.h?'h-on':'';var bOn=r.b?'b-on':'';
       var tcls=f.local?'fc-tag local':'fc-tag';
       var tagLbl=f.local?'マイ':f.c==='ja'?'日本語':f.c;
-      html+='<div class="fc" draggable="true" ondragstart="onDragStart(event,\''+ea(f.n)+'\')">'
+      var key=makeKey(f.n,sampleWeight);
+      var r=roles[key]||{};
+      var hOn=r.h?'h-on':'';var bOn=r.b?'b-on':'';
+      html+='<div class="fc" draggable="true" ondragstart="onDragStart(event,\''+ea(key)+'\')">'
         +'<div class="fc-prev"><div class="fc-samp" style="font-family:\''+esc(f.n)+'\',serif;font-size:'+Math.round(sampleSize*(5/gridCols))+'px;font-weight:'+sampleWeight+'">'+esc(dispText)+'</div></div>'
         +'<div class="fc-foot">'
           +'<span class="fc-name" title="クリックでコピー" onclick="copyFont(\''+ea(f.n)+'\',event)">'+esc(f.n)+'</span>'
           +'<span class="'+tcls+'">'+tagLbl+'</span>'
           +'<div class="hb-btns">'
-            +'<button class="hb '+hOn+'" onclick="toggleRole(\''+ea(f.n)+'\',\'h\')">H</button>'
-            +'<button class="hb '+bOn+'" onclick="toggleRole(\''+ea(f.n)+'\',\'b\')">B</button>'
+            +'<button class="hb '+hOn+'" onclick="toggleRole(\''+ea(key)+'\',\'h\')">H</button>'
+            +'<button class="hb '+bOn+'" onclick="toggleRole(\''+ea(key)+'\',\'b\')">B</button>'
           +'</div>'
         +'</div>'
       +'</div>';
@@ -799,11 +806,12 @@ function renderGrid(){
   document.getElementById('t1-body').innerHTML=html;
 }
 
-function toggleRole(name,role){
-  if(!roles[name])roles[name]={h:false,b:false};
-  roles[name][role]=!roles[name][role];
-  if(!roles[name].h&&!roles[name].b)delete roles[name];
-  loadGF(name);
+function toggleRole(key,role){
+  var p=parseKey(key);
+  if(!roles[key])roles[key]={h:false,b:false};
+  roles[key][role]=!roles[key][role];
+  if(!roles[key].h&&!roles[key].b)delete roles[key];
+  loadGF(p.name);
   saveRoles();
   updateBadge();renderGrid();renderChecked();
 }
@@ -919,8 +927,8 @@ function updateBadge(){
 
 // CHECKED
 function renderChecked(){
-  var hList=Object.keys(roles).filter(function(n){return roles[n].h;});
-  var bList=Object.keys(roles).filter(function(n){return roles[n].b;});
+  var hList=Object.keys(roles).filter(function(k){return roles[k].h;});
+  var bList=Object.keys(roles).filter(function(k){return roles[k].b;});
   document.getElementById('cnt-h').textContent='　'+hList.length+'件';
   document.getElementById('cnt-b').textContent='　'+bList.length+'件';
   var szH=parseInt(document.getElementById('sz-h').value)||40;
@@ -928,38 +936,31 @@ function renderChecked(){
 
   function makeCards(list,role,sz,useCls){
     if(!list.length)return '<div class="col-empty">フォント一覧タブで<br>'+(role==='h'?'H（見出し）':'B（本文）')+'を<br>チェックしてください</div>';
-    return list.map(function(name){
-      var isAct=pfFont[role]===name;
+    return list.map(function(key){
+      var p=parseKey(key);
+      var name=p.name; var weight=p.weight;
+      var isAct=pfFont[role]===key;
       var isMissing=missingFonts.has(name);
       var cls='cfc'+(isAct?' selected-'+role:'');
-      return '<div class="'+cls+'" onclick="applyPfFont(\''+role+'\',\''+ea(name)+'\')" draggable="true" ondragstart="onDragStart(event,\''+ea(name)+'\')">'
-        +'<div class="cfc-prev"><div class="cfc-samp" style="font-family:\''+esc(name)+'\',serif;font-size:'+Math.round(sz*0.75)+'px;color:var(--text)">'+esc(sampleText)+'</div></div>'
-        +'<div class="cfc-foot">'
-          +'<span class="cfc-name" title="クリックでコピー" onclick="event.stopPropagation();copyFont(\''+ea(name)+'\',event)">'+esc(name)+'</span>'
-          +(isMissing?'<span style="font-size:9px;color:#ff6060;flex-shrink:0;white-space:nowrap">⚠ 未所持</span>':'')
-          +'<button class="cfc-use '+useCls+'" onclick="event.stopPropagation();applyPfFont(\''+role+'\',\''+ea(name)+'\')">'+(isAct?'✓ 適用中':'適用')+'</button>'
-          +'<button class="cfc-rm" onclick="event.stopPropagation();removeRole(\''+ea(name)+'\',\''+role+'\')">✕</button>'
-        +'</div>'
-        +(isMissing?'<div style="font-size:10px;color:#ff6060;padding:4px 10px 6px;background:rgba(255,96,96,0.07)">このフォントはあなたは持っていません</div>':'')
-      +'</div>';
+      return '<div class="'+cls+'" onclick="applyPfFont(\''+role+'\',\''+ea(key)+'\')" draggable="true" ondragstart="onDragStart(event,\''+ea(key)+'\')">'        +'<div class="cfc-prev"><div class="cfc-samp" style="font-family:\''+esc(name)+'\',serif;font-size:'+Math.round(sz*0.75)+'px;font-weight:'+weight+';color:var(--text)">'+esc(sampleText)+'</div></div>'        +'<div class="cfc-foot">'          +'<span class="cfc-name" title="クリックでコピー" onclick="event.stopPropagation();copyFont(\''+ea(name)+'\',event)">'+esc(name)+'</span>'          +'<span style="font-size:9px;color:var(--text-dim);flex-shrink:0">'+weight+'</span>'          +(isMissing?'<span style="font-size:9px;color:#ff6060;flex-shrink:0;white-space:nowrap">⚠ 未所持</span>':'')          +'<button class="cfc-use '+useCls+'" onclick="event.stopPropagation();applyPfFont(\''+role+'\',\''+ea(key)+'\')">'+( isAct?'✓ 適用中':'適用')+'</button>'          +'<button class="cfc-rm" onclick="event.stopPropagation();removeRole(\''+ea(key)+'\',\''+role+'\')">'+'✕</button>'        +'</div>'        +(isMissing?'<div style="font-size:10px;color:#ff6060;padding:4px 10px 6px;background:rgba(255,96,96,0.07)">このフォントはあなたは持っていません</div>':'')      +'</div>';
     }).join('');
   }
   document.getElementById('col-h-list').innerHTML=makeCards(hList,'h',szH,'uh');
   document.getElementById('col-b-list').innerHTML=makeCards(bList,'b',szB,'ub');
 }
 
-function removeRole(name,role){
-  if(roles[name])roles[name][role]=false;
-  if(roles[name]&&!roles[name].h&&!roles[name].b)delete roles[name];
-  if(pfFont[role]===name){pfFont[role]=null;document.getElementById('pf-'+role+'-label').textContent='';}
+function removeRole(key,role){
+  if(roles[key])roles[key][role]=false;
+  if(roles[key]&&!roles[key].h&&!roles[key].b)delete roles[key];
+  if(pfFont[role]===key){pfFont[role]=null;document.getElementById('pf-'+role+'-label').textContent='';}
   updateBadge();renderGrid();renderChecked();
 }
 
 // DRAG
-function onDragStart(e,name){
-  dragFont=name;
+function onDragStart(e,key){
+  dragFont=key;
   e.dataTransfer.effectAllowed='copy';
-  e.dataTransfer.setData('text/plain',name);
+  e.dataTransfer.setData('text/plain',key);
 }
 
 // GOOGLE FONTS
