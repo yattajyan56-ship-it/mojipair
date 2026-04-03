@@ -558,16 +558,22 @@ function switchTab(t,el){
 
 // ---- PAIRS ----
 function savePair(){
-  var h=pfFont.h;
-  var b=pfFont.b;
-  if(!h&&!b){showToast('まずH・Bにフォントを設定してください');return;}
+  var hKey=pfFont.h;
+  var bKey=pfFont.b;
+  if(!hKey&&!bKey){showToast('まずH・Bにフォントを設定してください');return;}
+  var ph=hKey?parseKey(hKey):null;
+  var pb=bKey?parseKey(bKey):null;
   var hText=document.getElementById('pf-h-text').innerText||'';
   var bText=document.getElementById('pf-b-text').innerText||'';
   var hSize=document.getElementById('sz-h-val').textContent||'40px';
   var bSize=document.getElementById('sz-b-val').textContent||'17px';
   var now=new Date();
   var ts=now.getMonth()+1+'/'+now.getDate()+' '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
-  savedPairs.unshift({h:h||null,b:b||null,hText:hText,bText:bText,hSize:hSize,bSize:bSize,ts:ts,id:Date.now()});
+  savedPairs.unshift({
+    h:ph?ph.name:null, hWeight:ph?ph.weight:400,
+    b:pb?pb.name:null, bWeight:pb?pb.weight:400,
+    hText:hText,bText:bText,hSize:hSize,bSize:bSize,ts:ts,id:Date.now()
+  });
   savePairsStorage();
   updatePairsBadge();
   showToast('ペアを保存しました');
@@ -598,17 +604,22 @@ function deletePair(id){
 function applyPair(id){
   var p=savedPairs.find(function(x){return x.id===id;});
   if(!p)return;
+  var hWeight=p.hWeight||400;
+  var bWeight=p.bWeight||400;
   if(p.h){
-    pfFont.h=p.h;loadGF(p.h);
+    var hKey=makeKey(p.h,hWeight);
+    pfFont.h=hKey;loadGF(p.h);
     document.getElementById('pf-h-text').style.fontFamily="'"+p.h+"',serif";
-    document.getElementById('pf-h-label').textContent=p.h;
+    document.getElementById('pf-h-text').style.fontWeight=hWeight;
+    document.getElementById('pf-h-label').textContent=p.h+' '+hWeight;
   }
   if(p.b){
-    pfFont.b=p.b;loadGF(p.b);
+    var bKey=makeKey(p.b,bWeight);
+    pfFont.b=bKey;loadGF(p.b);
     document.getElementById('pf-b-text').style.fontFamily="'"+p.b+"',serif";
-    document.getElementById('pf-b-label').textContent=p.b;
+    document.getElementById('pf-b-text').style.fontWeight=bWeight;
+    document.getElementById('pf-b-label').textContent=p.b+' '+bWeight;
   }
-  // サイズも復元
   var szH=parseInt(p.hSize)||40;
   var szB=parseInt(p.bSize)||17;
   document.getElementById('pf-h-text').style.fontSize=szH+'px';
@@ -646,14 +657,16 @@ function renderPairs(){
   list.style.gridTemplateColumns='repeat('+pairsCols+',1fr)';
 
   list.innerHTML=savedPairs.map(function(p,idx){
-    var hLabel=p.h?p.h:'(なし)';
-    var bLabel=p.b?p.b:'(なし)';
+    var hWeight=p.hWeight||400;
+    var bWeight=p.bWeight||400;
+    var hLabel=p.h?(p.h+' '+hWeight):'(なし)';
+    var bLabel=p.b?(p.b+' '+bWeight):'(なし)';
     var hMissing=p.h&&missingFonts.has(p.h);
     var bMissing=p.b&&missingFonts.has(p.b);
     var hDispSz=Math.min(parseInt(p.hSize)||40,24);
     var bDispSz=Math.min(parseInt(p.bSize)||17,14);
-    var hStyle=p.h?"font-family:'"+esc(p.h)+"',serif;font-size:"+hDispSz+"px":"font-size:"+hDispSz+"px";
-    var bStyle=p.b?"font-family:'"+esc(p.b)+"',sans-serif;font-size:"+bDispSz+"px":"font-size:"+bDispSz+"px";
+    var hStyle=p.h?"font-family:'"+esc(p.h)+"',serif;font-size:"+hDispSz+"px;font-weight:"+hWeight:"font-size:"+hDispSz+"px";
+    var bStyle=p.b?"font-family:'"+esc(p.b)+"',sans-serif;font-size:"+bDispSz+"px;font-weight:"+bWeight:"font-size:"+bDispSz+"px";
     return '<div class="pair-card" data-idx="'+idx+'" draggable="true"'
       +' onclick="applyPair('+p.id+')"'
       +' ondragstart="pairDragStart(event,'+idx+')"'
