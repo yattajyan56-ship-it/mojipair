@@ -321,7 +321,8 @@ input[type=range]::-webkit-slider-thumb{
       <input type="range" id="sz-b" min="10" max="48" step="1" value="17" oninput="onSzB(this.value)">
       <span class="sz-val" id="sz-b-val">17px</span>
     </div>
-    <button class="hd-btn" onclick="savePreviewImage()" style="margin-left:auto" id="save-btn">↓ 画像を保存</button>
+    <button class="hd-btn" onclick="savePreviewImage()" style="margin-left:auto;background:none;border:1px solid var(--border2);color:var(--accent);font-weight:700" id="save-btn">↓ 画像を保存</button>
+    <button class="hd-btn" onclick="shareChecked()" style="background:none;border:1px solid var(--border2);color:var(--accent);font-weight:700">🔗 リストを共有</button>
     <button class="hd-btn" onclick="savePair()" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700">＋ ペアを保存</button>
   </div>
 </div>
@@ -378,7 +379,6 @@ input[type=range]::-webkit-slider-thumb{
   <div class="panel" id="panel-checked">
     <div class="t2-body">
       <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <button onclick="shareChecked()" style="padding:5px 14px;font-size:11px;font-weight:700;border:1px solid var(--border2);border-radius:var(--radius-sm);background:none;color:var(--accent);cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">🔗 チェックリストを共有</button>
         <button onclick="clearAllRoles()" style="padding:5px 14px;font-size:11px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:none;color:var(--text-muted);cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s" onmouseover="this.style.color='#ff6060'" onmouseout="this.style.color='var(--text-muted)'">✕ チェックをすべてクリア</button>
       </div>
       <div class="t2-cols">
