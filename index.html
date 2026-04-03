@@ -647,8 +647,8 @@ function renderPairs(){
     var bLabel=p.b?p.b:'(なし)';
     var hDispSz=Math.min(parseInt(p.hSize)||40,24);
     var bDispSz=Math.min(parseInt(p.bSize)||17,14);
-    var hStyle=p.h?'font-family:''+esc(p.h)+'',serif;font-size:'+hDispSz+'px':'font-size:'+hDispSz+'px';
-    var bStyle=p.b?'font-family:''+esc(p.b)+'',sans-serif;font-size:'+bDispSz+'px':'font-size:'+bDispSz+'px';
+    var hStyle=p.h?"font-family:'"+esc(p.h)+"',serif;font-size:"+hDispSz+"px":"font-size:"+hDispSz+"px";
+    var bStyle=p.b?"font-family:'"+esc(p.b)+"',sans-serif;font-size:"+bDispSz+"px":"font-size:"+bDispSz+"px";
     return '<div class="pair-card" data-idx="'+idx+'" draggable="true"'
       +' onclick="applyPair('+p.id+')"'
       +' ondragstart="pairDragStart(event,'+idx+')"'
@@ -656,7 +656,7 @@ function renderPairs(){
       +' ondrop="pairDrop(event,'+idx+')"'
       +' ondragleave="pairDragLeave(event)"'
       +' style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .15s"'
-      +' onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">'
+      +' onmouseover="this.style.borderColor=var(--accent)" onmouseout="this.style.borderColor=var(--border)">'
       +'<div style="background:#fff;padding:14px 16px 10px;min-height:80px">'
         +'<div style="'+hStyle+';color:#0e0e10;line-height:1.2;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.hText||'見出しテキスト')+'</div>'
         +'<div style="'+bStyle+';color:#444;line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+esc(p.bText||'本文テキスト')+'</div>'
@@ -855,7 +855,6 @@ function shareChecked(){
     warn.style.color=url.length>4000?'#ff6060':'var(--accent)';
     document.getElementById('checked-share-modal').style.display='flex';
   }catch(e){showToast('共有リンクの生成に失敗しました');}
-}
 }
 
 function copyCheckedUrl(){
