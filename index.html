@@ -1037,8 +1037,12 @@ function savePreviewImage(){
 
   var hEl=document.getElementById('pf-h-text');
   var bEl=document.getElementById('pf-b-text');
-  var hFont=pfFont.h||'Zen Kaku Gothic New';
-  var bFont=pfFont.b||'Zen Kaku Gothic New';
+  var hParsed=pfFont.h?parseKey(pfFont.h):{name:'Zen Kaku Gothic New',weight:400};
+  var bParsed=pfFont.b?parseKey(pfFont.b):{name:'Zen Kaku Gothic New',weight:400};
+  var hFont=hParsed.name;
+  var bFont=bParsed.name;
+  var hWeight=hParsed.weight;
+  var bWeight=bParsed.weight;
   var hSize=parseInt(document.getElementById('sz-h').value)||40;
   var bSize=parseInt(document.getElementById('sz-b').value)||17;
   var hText=hEl.innerText||hEl.textContent;
@@ -1070,11 +1074,11 @@ function savePreviewImage(){
   var innerW=W-PAD*2;
 
   // measure heights at 1x then scale canvas
-  ctx.font='700 '+hSize+'px \''+hFont+'\', serif';
+  ctx.font=hWeight+' '+hSize+'px \''+hFont+'\', serif';
   var hLines=wrapText(ctx,hText,innerW);
   var hBlockH=Math.max(hLines.length*Math.round(hSize*1.45)+PAD*2, hSize*2+PAD*2);
 
-  ctx.font='400 '+bSize+'px \''+bFont+'\', sans-serif';
+  ctx.font=bWeight+' '+bSize+'px \''+bFont+'\', sans-serif';
   var bLines=wrapText(ctx,bText,innerW);
   var bBlockH=Math.max(bLines.length*Math.round(bSize*1.8)+PAD*2, bSize*3+PAD*2);
 
@@ -1110,12 +1114,13 @@ function savePreviewImage(){
 
   // H font name (orange, right)
   ctx.fillStyle='#e86a1a';
-  var hFontLabelW=ctx.measureText(hFont).width;
-  ctx.fillText(hFont,W-PAD-hFontLabelW,y+22);
+  var hFontLabel=hFont+' '+hWeight;
+  var hFontLabelW=ctx.measureText(hFontLabel).width;
+  ctx.fillText(hFontLabel,W-PAD-hFontLabelW,y+22);
 
   // H text
   ctx.fillStyle='#0e0e10';
-  ctx.font='700 '+hSize+'px \''+hFont+'\', serif';
+  ctx.font=hWeight+' '+hSize+'px \''+hFont+'\', serif';
   var hY=y+PAD+hSize;
   hLines.forEach(function(line){
     ctx.fillText(line,PAD,hY);
@@ -1136,12 +1141,13 @@ function savePreviewImage(){
 
   // B font name
   ctx.fillStyle='#e86a1a';
-  var bFontLabelW=ctx.measureText(bFont).width;
-  ctx.fillText(bFont,W-PAD-bFontLabelW,y+22);
+  var bFontLabel=bFont+' '+bWeight;
+  var bFontLabelW=ctx.measureText(bFontLabel).width;
+  ctx.fillText(bFontLabel,W-PAD-bFontLabelW,y+22);
 
   // B text
   ctx.fillStyle='#0e0e10';
-  ctx.font='400 '+bSize+'px \''+bFont+'\', sans-serif';
+  ctx.font=bWeight+' '+bSize+'px \''+bFont+'\', sans-serif';
   var bY=y+PAD+bSize;
   bLines.forEach(function(line){
     ctx.fillText(line,PAD,bY);
@@ -1161,7 +1167,7 @@ function savePreviewImage(){
 
   ctx.fillStyle='#999';
   ctx.font='400 12px \'Zen Kaku Gothic New\', sans-serif';
-  var pairStr='H: '+hFont+'  ×  B: '+bFont;
+  var pairStr='H: '+hFont+' '+hWeight+'  ×  B: '+bFont+' '+bWeight;
   var pairW=ctx.measureText(pairStr).width;
   ctx.fillText(pairStr,W-PAD-pairW,y+metaH/2+5);
 
