@@ -347,7 +347,7 @@ input[type=range]::-webkit-slider-thumb{
         <button class="fbtn" onclick="setFilter('google',this)">Googleフォント</button>
         <button class="fbtn" onclick="setFilter('local',this)">マイフォント</button>
       </div>
-      <input class="srch" id="sample-txt" type="text" value="あ Bb 123" placeholder="サンプルテキスト..." oninput="onSampleChange(this.value)" style="width:120px">
+      <input class="srch" id="sample-txt" type="text" value="あ Aa 123" placeholder="サンプルテキスト..." oninput="onSampleChange(this.value)" style="width:120px">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">列数</span>
         <input type="range" id="grid-cols" min="2" max="8" step="1" value="4" oninput="onGridCols(this.value)" style="width:70px">
@@ -793,14 +793,14 @@ var catFilter='all';
 var loadedGF=new Set();
 var dragFont=null;
 var sampleSize=30;
-var sampleText='あ Bb 123';
+var sampleText='あ Aa 123';
 var sampleWeight=400;
 var gridCols=4;
 
 function makeKey(name,w){return name+'::'+w;}
 function parseKey(key){var p=key.lastIndexOf('::');return p<0?{name:key,weight:400}:{name:key.slice(0,p),weight:parseInt(key.slice(p+2))||400};}
 
-function onSampleChange(v){sampleText=v||'あ Bb 123';renderGrid();}
+function onSampleChange(v){sampleText=v||'あ Aa 123';renderGrid();}
 function onGridCols(v){gridCols=parseInt(v);document.getElementById('grid-cols-val').textContent=v;renderGrid();}
 function onGridWeight(v){sampleWeight=parseInt(v);renderGrid();}
 
