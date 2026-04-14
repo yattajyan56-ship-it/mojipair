@@ -1032,21 +1032,30 @@ function renderGrid(){
     if(catFilter==='all')return mq;
     if(catFilter==='google')return mq&&!f.local;
     if(catFilter==='local')return mq&&f.local;
+    // JP/ENフィルターはマイフォントも含める
     return mq&&f.c===catFilter;
   });
 
   var showCats;
-  if(catFilter==='all')showCats=['local','ja','en'];
+  if(catFilter==='all')showCats=['ja','en','local'];
   else if(catFilter==='google')showCats=['ja','en'];
   else if(catFilter==='local')showCats=['local'];
-  else showCats=[catFilter];
+  else showCats=[catFilter,'local']; // JP/ENフィルター時もマイフォントセクションを表示
 
   var catLbl={local:'マイフォント',ja:'JP フォント',en:'EN フォント'};
   var html='';
   showCats.forEach(function(cat){
-    var items=cat==='local'
-      ?filtered.filter(function(f){return f.local;})
-      :filtered.filter(function(f){return!f.local&&f.c===cat;});
+    var items;
+    if(cat==='local'){
+      items=filtered.filter(function(f){return f.local;});
+    } else {
+      // カテゴリ一致（マイフォント含む）ただしgoogleフィルター時はlocalを除外
+      items=filtered.filter(function(f){
+        if(catFilter==='all'||catFilter==='ja'||catFilter==='en')
+          return f.c===cat&&!f.local;
+        return f.c===cat&&!f.local;
+      });
+    }
     if(!items.length)return;
     html+='<div class="sec-hd">'+catLbl[cat]+' <span style="font-weight:400;opacity:.6">('+items.length+')</span></div><div class="fgrid" style="grid-template-columns:repeat('+gridCols+',1fr)">';
     items.forEach(function(f){
@@ -1242,6 +1251,12 @@ function loadGF(name){
   loadedGF.add(name);
 }
 
+// JP/EN 自動判定（フォント名に日本語キーワードが含まれるかで判定）
+function guessLang(name){
+  var jpKeywords=/gothic|mincho|maru|kaku|antique|japanese|japan|\bjp\b|noto.*jp|sans.*jp|serif.*jp|ipa|mplus|m\+|biz|hina|shippori|sawarabi|kosugi|klee|yuji|yusei|kaisei|dela|train|reggae|rocknroll|dotgothic|stick|murecho|zen.*kaku|zen.*maru|zen.*old|zen.*antique|zen.*kurenaido|hachi|tegomin|palette|biz.*ud|ud.*gothic|ud.*mincho/i;
+  return jpKeywords.test(name)?'ja':'en';
+}
+
 // LOCAL SYNC
 async function syncLocal(){
   var btn=document.getElementById('sync-btn');
@@ -1256,7 +1271,11 @@ async function syncLocal(){
     var added=0;
     fonts.forEach(function(f){
       var n=f.family;
-      if(!seen.has(n)&&!GFONTS.some(function(g){return g.n===n;})){seen.add(n);localFonts.push({n:n,c:'sans',local:true});added++;}
+      if(!seen.has(n)&&!GFONTS.some(function(g){return g.n===n;})){
+        seen.add(n);
+        localFonts.push({n:n,c:guessLang(n),local:true});
+        added++;
+      }
     });
     btn.textContent='✓ '+added+'個を同期完了';
     setTimeout(function(){btn.textContent='⟳ ローカルフォントを同期';},3000);
@@ -1276,7 +1295,8 @@ function uploadFonts(e){
       var ff=new FontFace(name,ev.target.result);
       ff.load().then(function(loaded){
         document.fonts.add(loaded);
-        if(!localFonts.some(function(f){return f.n===name;}))localFonts.push({n:name,c:'sans',local:true});
+        if(!localFonts.some(function(f){return f.n===name;}))
+          localFonts.push({n:name,c:guessLang(name),local:true});
         renderGrid();
       }).catch(function(){showToast('読み込み失敗: '+name);});
     };
