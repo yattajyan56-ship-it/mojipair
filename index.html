@@ -1223,7 +1223,7 @@ function renderChecked(){
     }).join('');
   }
   document.getElementById('col-h-list').innerHTML=makeCards(hList,'h',szH,'uh');
-  document.getElementById('col-b-list').innerHTML=makeCards(bList,'b',szB,'ub');
+  document.getElementById('col-b-list').innerHTML=makeCards(bList,'b',szH,'ub');
 }
 
 function removeRole(key,role){
@@ -1498,6 +1498,9 @@ function ea(s){return String(s).replace(/'/g,'&#39;');}
 
 loadRoles();
 loadPairsStorage();
+// 初期状態はチェックなし・保存ペアなし
+roles={};
+savedPairs=[];
 restoreFromHash();
 GFONTS.slice(0,20).forEach(function(f){loadGF(f.n);});
 renderGrid();
